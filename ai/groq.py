@@ -9,7 +9,7 @@ def reconstruct_arabic(transcription_ar: str) -> str:
     prompt_clean = f"""
 Clean this medical transcript. It may be in Egyptian Arabic or English.
 
-RULES:
+RULES to follow:
 - Fix spelling and Whisper recognition errors.
 - Separate incorrectly connected words.
 - Fix medical term misspellings.
