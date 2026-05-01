@@ -1,9 +1,13 @@
 import json
 import os
+from dotenv import load_dotenv
 from groq import Groq
 
-client = Groq(api_key="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")
+# Load environment variables
+load_dotenv()
 
+# Initialize Groq client
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def reconstruct_arabic(transcription_ar: str) -> str:
     prompt_clean = f"""
