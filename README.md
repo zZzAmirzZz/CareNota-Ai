@@ -53,6 +53,7 @@ Response:
     "treatment_plan": "..."
   }
 }
+
 ⚠️ Notes
 Audio URL must be a direct downloadable audio file
 Google Drive links need conversion to direct download
@@ -70,6 +71,9 @@ Upload audio directly (instead of URL)
 Real-time streaming
 Database integration (Firebase)
 Error handling & validation improvements
+
+
+
 👩‍💻 Author
 
 Nadeen Ahmed
