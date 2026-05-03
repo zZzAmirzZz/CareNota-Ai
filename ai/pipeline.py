@@ -1,5 +1,6 @@
 from ai.whisper_model import transcribe_audio
-from ai.groq import reconstruct_arabic, extract_json, safe_json_parse
+from ai.gemini import reconstruct_arabic, extract_json, safe_json_parse
+
 
 def run_pipeline(file_path):
     text = transcribe_audio(file_path)
