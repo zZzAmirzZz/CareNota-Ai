@@ -1,12 +1,10 @@
-# CareNota-Ai
+# 🏥 CareNota-Ai: Healthcare AI Audio Processing API
 
-> AI-powered medical transcription and clinical report generation system
+An AI-powered backend system that processes medical audio recordings and converts them into structured clinical reports using advanced speech recognition and large language models.
 
-## Overview
+## 📌 Overview
 
-CareNota-Ai is a Python-based application that converts medical audio recordings into structured clinical reports in JSON format. It uses OpenAI's Whisper for speech-to-text transcription and Google's Gemini API for intelligent medical text processing and SOAP-formatted report generation.
-
-The system supports both **Egyptian Arabic** and **English** inputs, making it adaptable for diverse healthcare settings.
+CareNota-Ai streamlines clinical documentation by automatically converting audio recordings into structured SOAP-formatted medical reports. The system handles multiple languages including Arabic and Egyptian Arabic dialects, making it accessible for diverse healthcare environments.
 
 ## Key Features
 
