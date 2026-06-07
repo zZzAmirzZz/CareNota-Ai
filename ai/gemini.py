@@ -49,7 +49,7 @@ def extract_json(
     last_summary=None,
 ) -> str:
 
-    EXTRACTION_PROMPT = f"""
+    EXTRACTION_PROMPT = """
 You are an ELITE MEDICAL SCRIBE. Transform the provided doctor-patient transcript into a structured clinical report.
 
 ### PREPROCESSING RULE:
@@ -137,7 +137,7 @@ You are an ELITE MEDICAL SCRIBE. Transform the provided doctor-patient transcrip
 - Gender: {gender}
 - Chronic conditions: {chronic_conditions}
 - Allergies: {allergies}
-- Last visit summary: {last_summary}
+- Last visit summary: {last_visit_summary}
 
 ### INPUT TRANSCRIPT:
 {speechmatics_transcript2}
@@ -173,7 +173,7 @@ You are an ELITE MEDICAL SCRIBE. Transform the provided doctor-patient transcrip
             gender=gender or "Not provided",
             chronic_conditions=chronic_conditions or "None",
             allergies=allergies or "None",
-            last_visit_summary=last_summary or "No previous visit on record"
+            last_visit_summary= last_summary or "No previous visit on record"
         )
     )
     return response.text.strip()
