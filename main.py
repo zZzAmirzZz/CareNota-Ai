@@ -15,6 +15,11 @@ app = FastAPI()
 
 class AudioRequest(BaseModel):
     audio_url: str
+    age: int | None = None
+    gender: str | None = None
+    chronic_conditions: str | None = None
+    allergies: str | None = None
+    last_summary: dict | None = None
 
 
 @app.get("/")

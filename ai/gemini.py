@@ -40,12 +40,21 @@ TEXT:
 
 
 # 🔹 PASS 2 — YOUR EXACT PROMPT (UNCHANGED)
-def extract_json(speechmatics_transcript2: str) -> str:
+def extract_json(
+    speechmatics_transcript2: str,
+    age=None,
+    gender=None,
+    chronic_conditions=None,
+    allergies=None,
+    last_summary=None,
+) -> str:
 
-    EXTRACTION_PROMPT = """
+    EXTRACTION_PROMPT = f"""
 You are an ELITE MEDICAL SCRIBE. Transform the provided doctor-patient transcript into a structured clinical report.
+
 ### PREPROCESSING RULE:
-- The input is an AUDIO TRANSCRIPT (Speech-to-Text output) and may contain recognition errors the input also may include PAST patient data.
+- The input is an AUDIO TRANSCRIPT (Speech-to-Text output) and may contain recognition errors.
+- The input may also include PAST patient data.
 - Separate clearly between:
   - CURRENT visit (from transcript)
   - PAST patient data (from database)
@@ -73,50 +82,75 @@ You are an ELITE MEDICAL SCRIBE. Transform the provided doctor-patient transcrip
 - Extract and organize only explicitly stated or directly implied information without constructing missing clinical history.
 
 ### SOAP RULES:
-- SUBJECTIVE: Full HPI — onset, duration, symptoms, severity, exposure history if mentioned.
-- OBJECTIVE: Vitals (numerical values only) + Physical exam findings as described by doctor.
-- ASSESSMENT: Provide the MOST LIKELY clinical impression based on transcript.
-  If symptoms clearly match a known condition (e.g., vesicular rash + fever + exposure = Varicella),
-  name it explicitly. If a diagnosis is clearly stated or strongly supported by the transcript context, use the medically appropriate diagnosis terminology.
-- PLAN: Numbered list including medications, dosages (if mentioned), warnings, contraindications,
-  hygiene advice, and isolation duration if mentioned.
-- COMPARISON WITH LAST VISIT: If last visit summary is provided, fill comparison_with_previous_visit field with a brief clinical comparison.
-Only include differences supported by provided data.
+- SUBJECTIVE:
+  Full HPI — onset, duration, symptoms, severity, exposure history if mentioned.
+
+- OBJECTIVE:
+  Vitals (numerical values only) + Physical exam findings as described by doctor.
+
+- ASSESSMENT:
+  Provide the MOST LIKELY clinical impression based on transcript.
+  If symptoms clearly match a known condition
+  (e.g., vesicular rash + fever + exposure = Varicella),
+  name it explicitly.
+  If a diagnosis is clearly stated or strongly supported by transcript context,
+  use medically appropriate diagnosis terminology.
+
+- PLAN:
+  Numbered list including:
+  - medications
+  - dosages (if mentioned)
+  - warnings
+  - contraindications
+  - hygiene advice
+  - isolation duration if mentioned
+
+- COMPARISON WITH LAST VISIT:
+  If last visit summary is provided,
+  fill comparison_with_previous_visit with a brief clinical comparison.
+  Only include differences supported by provided data.
 
 ### PATIENT SUMMARY RULES:
-- Use simple, clear language for a non-medical patient
-- No medical jargon unless explained
-- Keep each field SHORT (1–2 lines max)
-- Do NOT repeat the same information across fields
-- Do NOT include doctor-only actions (e.g. auscultation, oxygen monitoring) unless rewritten as patient advice
-- Focus on: what the patient has, what they feel, what to do, and when to worry
-- Do NOT invent symptoms, medications, or advice not mentioned or clearly implied
-
+- Use simple, clear language for a non-medical patient.
+- No medical jargon unless explained.
+- Keep each field SHORT (1–2 lines max).
+- Do NOT repeat information across fields.
+- Do NOT include doctor-only actions
+  unless rewritten as patient advice.
+- Focus on:
+  - what the patient has
+  - what they feel
+  - what to do
+  - when to worry
+- Do NOT invent symptoms, medications, or advice.
 
 ### EMPTY FIELD RULE:
 - If information is explicitly stated, extract it.
-- If information is strongly implied by the physician's assessment or recommendations, summarize it conservatively.
-- Only return "Not specified in the consultation." when neither explicit nor clinically implied information exists.
+- If information is strongly implied by physician assessment,
+  summarize conservatively.
+- Only return:
+  "Not specified in the consultation."
+  when neither explicit nor clinically implied information exists.
 
 ### PATIENT CONTEXT (Past / Baseline Data):
-
-* Age: {age}
-* Gender: {gender}
-* Chronic conditions: 
-* Allergies: {allergies}
-* Last visit summary: {last_visit_summary}
+- Age: {age}
+- Gender: {gender}
+- Chronic conditions: {chronic_conditions}
+- Allergies: {allergies}
+- Last visit summary: {last_summary}
 
 ### INPUT TRANSCRIPT:
 {speechmatics_transcript2}
 
 ### OUTPUT (JSON ONLY, no explanation, no markdown):
+
 {{
   "doctor_summary": {{
     "subjective": "",
     "objective": "",
     "assessment": "",
     "plan": "",
-   "comparison_with_previous_visit": ""
+    "comparison_with_previous_visit": ""
   }},
   "patient_summary": {{
     "diagnosis": "",
@@ -129,13 +163,19 @@ Only include differences supported by provided data.
 """
 
 
+
+
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=EXTRACTION_PROMPT.format(
-            speechmatics_transcript2=speechmatics_transcript2
+            speechmatics_transcript2=speechmatics_transcript2,
+            age=age or "Not provided",
+            gender=gender or "Not provided",
+            chronic_conditions=chronic_conditions or "None",
+            allergies=allergies or "None",
+            last_visit_summary=last_summary or "No previous visit on record"
         )
     )
-
     return response.text.strip()
 
 
