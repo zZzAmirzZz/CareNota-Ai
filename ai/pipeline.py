@@ -1,3 +1,8 @@
+from ai.preprocessing import preprocess_audio
+from ai.whisper_model import transcribe_audio
+from ai.gemini import reconstruct_arabic, extract_json, safe_json_parse
+
+
 def run_pipeline(file_path, age=None, gender=None, chronic_conditions=None, allergies=None, last_summary=None):
     try:
         processed_path = preprocess_audio(file_path)
