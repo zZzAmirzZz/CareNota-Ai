@@ -19,13 +19,13 @@ def reconstruct_arabic(transcription_ar: str) -> str:
 Clean this medical transcript. It may be in Egyptian Arabic or English.
 
 RULES to follow:
-- Fix spelling and Whisper recognition errors.
-- Separate incorrectly connected words.
-- Fix medical term misspellings.
-- Keep all speaker labels (Doctor / Patient / Mother / etc).
-- DO NOT summarize or remove any lines.
-- DO NOT change the meaning.
-- If already in English, just fix typos and formatting.
+* Fix spelling and Whisper recognition errors.
+* Separate incorrectly connected words.
+* Fix medical term misspellings.
+* Keep all speaker labels (Doctor / Patient / Mother / etc).
+* DO NOT summarize or remove any lines.
+* DO NOT change the meaning.
+* If already in English, just fix typos and formatting.
 
 TEXT:
 {transcription_ar}
@@ -45,10 +45,15 @@ def extract_json(speechmatics_transcript2: str) -> str:
     EXTRACTION_PROMPT = """
 You are an ELITE MEDICAL SCRIBE. Transform the provided doctor-patient transcript into a structured clinical report.
 ### PREPROCESSING RULE:
-- The input is an AUDIO TRANSCRIPT (Speech-to-Text output) and may contain recognition errors.
-- FIRST step: mentally correct and normalize the transcript (fix medical words, grammar, and misheard terms).
-- Then perform clinical interpretation based on the corrected version.
+- The input is an AUDIO TRANSCRIPT (Speech-to-Text output) and may contain recognition errors the input also may include PAST patient data.
+- Separate clearly between:
+  - CURRENT visit (from transcript)
+  - PAST patient data (from database)
+- Perform clinical interpretation based on the corrected version.
 - DO NOT mention or output the corrected version separately — only use it internally.
+- Do NOT invent or assume information.
+- Do NOT mix past data as current symptoms.
+
 ### LANGUAGE RULES:
 - The input may be Egyptian Arabic or English.
 - doctor_summary fields: ALWAYS write in professional medical English.
@@ -65,15 +70,18 @@ You are an ELITE MEDICAL SCRIBE. Transform the provided doctor-patient transcrip
 - If the doctor mentions isolation or home rest, include it in the plan.
 - If exposure history is mentioned, include it in subjective.
 - Patient age is NOT symptom duration — never confuse the two.
+- Extract and organize only explicitly stated or directly implied information without constructing missing clinical history.
 
 ### SOAP RULES:
 - SUBJECTIVE: Full HPI — onset, duration, symptoms, severity, exposure history if mentioned.
 - OBJECTIVE: Vitals (numerical values only) + Physical exam findings as described by doctor.
-- ASSESSMENT: Provide the MOST SPECIFIC clinical diagnosis possible.
+- ASSESSMENT: Provide the MOST LIKELY clinical impression based on transcript.
   If symptoms clearly match a known condition (e.g., vesicular rash + fever + exposure = Varicella),
-  name it explicitly. Do NOT give a vague diagnosis if a specific one is implied.
+  name it explicitly. If a diagnosis is clearly stated or strongly supported by the transcript context, use the medically appropriate diagnosis terminology.
 - PLAN: Numbered list including medications, dosages (if mentioned), warnings, contraindications,
   hygiene advice, and isolation duration if mentioned.
+- COMPARISON WITH LAST VISIT: If last visit summary is provided, fill comparison_with_previous_visit field with a brief clinical comparison.
+Only include differences supported by provided data.
 
 ### PATIENT SUMMARY RULES:
 - Use simple, clear language for a non-medical patient
@@ -84,9 +92,19 @@ You are an ELITE MEDICAL SCRIBE. Transform the provided doctor-patient transcrip
 - Focus on: what the patient has, what they feel, what to do, and when to worry
 - Do NOT invent symptoms, medications, or advice not mentioned or clearly implied
 
+
 ### EMPTY FIELD RULE:
-- Only leave a field empty if absolutely nothing related was mentioned.
-- Do NOT invent information not present in the transcript.
+- If information is explicitly stated, extract it.
+- If information is strongly implied by the physician's assessment or recommendations, summarize it conservatively.
+- Only return "Not specified in the consultation." when neither explicit nor clinically implied information exists.
+
+### PATIENT CONTEXT (Past / Baseline Data):
+
+* Age: {age}
+* Gender: {gender}
+* Chronic conditions: 
+* Allergies: {allergies}
+* Last visit summary: {last_visit_summary}
 
 ### INPUT TRANSCRIPT:
 {speechmatics_transcript2}
@@ -94,10 +112,11 @@ You are an ELITE MEDICAL SCRIBE. Transform the provided doctor-patient transcrip
 ### OUTPUT (JSON ONLY, no explanation, no markdown):
 {{
   "doctor_summary": {{
-    "subjective": "Professional English narrative of patient complaints, symptom timeline, and any exposure history.",
-    "objective": "Vitals: [any measurements mentioned]. Physical Exam: [doctor clinical findings].",
-    "assessment": "Most specific clinical diagnosis as stated or clearly implied by doctor.",
-    "plan": "Numbered list: medications, warnings, contraindications, hygiene advice, isolation if mentioned."
+    "subjective": "",
+    "objective": "",
+    "assessment": "",
+    "plan": "",
+   "comparison_with_previous_visit": ""
   }},
   "patient_summary": {{
     "diagnosis": "",
@@ -108,6 +127,7 @@ You are an ELITE MEDICAL SCRIBE. Transform the provided doctor-patient transcrip
   }}
 }}
 """
+
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",

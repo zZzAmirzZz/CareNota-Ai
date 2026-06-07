@@ -6,3 +6,5 @@ torch
 python-dotenv
 requests
 pydub
+ffmpeg-python
+google-genai
