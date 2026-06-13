@@ -6,3 +6,4 @@ pydub
 torch
 requests
 python-multipart
+python-dotenv
